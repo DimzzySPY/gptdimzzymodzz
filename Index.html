@@ -1,0 +1,405 @@
+<html class="scroll-smooth" lang="id">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>
+   AI Pribadi - GPT Style Dimzzymodzz
+  </title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&amp;display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+   body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1e2f;
+      color: #fff;
+    }
+    /* Scrollbar styling for chatbox */
+    #chatbox::-webkit-scrollbar {
+      width: 8px;
+    }
+    #chatbox::-webkit-scrollbar-track {
+      background: #2a2d3b;
+    }
+    #chatbox::-webkit-scrollbar-thumb {
+      background-color: #61dafb;
+      border-radius: 10px;
+      border: 2px solid #2a2d3b;
+    }
+    /* Fade in/out animation for notifications */
+    @keyframes fadeInOut {
+      0%, 100% {opacity: 0;}
+      10%, 90% {opacity: 1;}
+    }
+    .animate-fadeInOut {
+      animation: fadeInOut 3s ease forwards;
+    }
+    /* Typing indicator bounce animation */
+    @keyframes bounceDelay {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+    }
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      background: #61dafb;
+      border-radius: 50%;
+      display: inline-block;
+      animation-name: bounceDelay;
+      animation-duration: 1.4s;
+      animation-iteration-count: infinite;
+      animation-timing-function: ease-in-out;
+    }
+    .typing-dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+  </style>
+ </head>
+ <body class="flex flex-col h-screen">
+  <header class="bg-[#282c34] border-b border-gray-700 shadow-md flex justify-between items-center px-5 py-4">
+   <h1 class="text-[#61dafb] font-bold text-xl sm:text-2xl select-none flex items-center gap-2">
+    <img alt="Logo AI Pribadi, blue square with white AI letters" class="w-8 h-8 rounded" height="32" src="https://storage.googleapis.com/a1aa/image/6179c490-f229-4e00-4283-bd5edae511e7.jpg" width="32"/>
+    AI Pribadi - GPT Style Dimzzymodzz
+   </h1>
+   <button aria-label="Hapus chat" class="flex items-center gap-2 bg-[#61dafb] text-[#111] rounded-full px-4 py-2 font-semibold hover:bg-[#21a1f1] transition-colors focus:outline-none focus:ring-2 focus:ring-[#61dafb]" id="clear-btn">
+    <i class="fas fa-trash">
+    </i>
+    Delete
+   </button>
+  </header>
+  <main aria-live="polite" aria-relevant="additions" class="flex-1 overflow-y-auto px-4 py-5 space-y-4 sm:px-6 sm:py-6 scroll-smooth" id="chatbox" role="log">
+   <!-- Chat messages will be appended here -->
+  </main>
+  <div aria-atomic="true" aria-live="assertive" class="hidden flex items-center justify-center gap-3 px-4 py-3 text-[#61dafb] bg-[#282c34] border-t border-gray-700 shadow-inner select-none" id="loading-spinner" role="status">
+   <span class="spinner-border animate-spin inline-block w-5 h-5 border-4 border-t-[#61dafb] border-gray-300 rounded-full">
+   </span>
+   <span>
+    Memproses permintaan sabar sayang...
+   </span>
+  </div>
+  <footer class="bg-[#282c34] border-t border-gray-700 shadow-inner px-4 py-3 flex gap-3 items-center">
+   <div class="relative flex-1">
+    <input aria-label="Input pesan" autocomplete="off" class="w-full rounded-full bg-[#2a2d3b] border border-gray-700 text-white text-base sm:text-lg px-5 pr-14 py-3 focus:outline-none focus:ring-2 focus:ring-[#61dafb] transition" id="input" placeholder="Tanyakan apa saja..." type="text"/>
+    <button aria-label="Voice Input" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#61dafb] hover:text-[#21a1f1] transition focus:outline-none focus:ring-2 focus:ring-[#61dafb] rounded-full p-2" id="mic-btn" title="Voice Input">
+     <i class="fas fa-microphone fa-lg">
+     </i>
+    </button>
+   </div>
+   <button aria-label="Kirim pesan" class="flex items-center gap-2 bg-[#61dafb] text-[#111] rounded-full px-5 py-3 font-semibold hover:bg-[#21a1f1] transition focus:outline-none focus:ring-2 focus:ring-[#61dafb] disabled:bg-gray-600 disabled:cursor-not-allowed" id="send-btn">
+    <i class="fas fa-paper-plane">
+    </i>
+    Sending
+   </button>
+  </footer>
+  <div aria-atomic="true" aria-live="assertive" class="fixed bottom-5 right-5 bg-green-600 text-white px-5 py-3 rounded-md shadow-lg opacity-0 pointer-events-none transition-opacity select-none z-50" id="copy-success" role="alert">
+   Teks berhasil disalin!
+  </div>
+  <script>
+   const chatbox = document.getElementById('chatbox');
+    const input = document.getElementById('input');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const sendBtn = document.getElementById('send-btn');
+    const micBtn = document.getElementById('mic-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const copySuccess = document.getElementById('copy-success');
+
+    const API_KEY = "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";
+
+    let conversationHistory = [
+      {
+        role: "system",
+        content: "Kamu adalah AI pribadi yang ramah dan pintar, dibuat oleh @dimzzymodzz. Gunakan bahasa Indonesia yang baik dan santun."
+      }
+    ];
+
+    // Initialize chat with welcome message
+    function initChat() {
+      if (chatbox.children.length === 0) {
+        addMessage("Halo! Saya AI asisten pribadi @dimzzymodzz. Ada yang bisa saya bantu?", 'bot');
+      }
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      initSpeechRecognition();
+    }
+
+    // Add message to chatbox
+    function addMessage(text, type, isCode = false) {
+      const messageWrapper = document.createElement('div');
+      messageWrapper.className = `max-w-[80%] break-words px-4 py-3 rounded-2xl leading-relaxed whitespace-pre-wrap transition-all ${
+        type === 'user'
+          ? 'self-end bg-[#007acc] rounded-br-none text-white'
+          : 'self-start bg-[#444] rounded-bl-none text-white'
+      }`;
+      messageWrapper.setAttribute('tabindex', '-1');
+      messageWrapper.setAttribute('role', 'article');
+      messageWrapper.setAttribute('aria-label', type === 'user' ? 'Pesan pengguna' : 'Pesan AI');
+
+      if (isCode) {
+        const codeBlock = document.createElement('pre');
+        codeBlock.className = 'bg-[#282c34] rounded-lg p-4 font-mono text-sm sm:text-base border-l-4 border-[#61dafb] whitespace-pre-wrap break-words';
+        codeBlock.textContent = text;
+        messageWrapper.appendChild(codeBlock);
+      } else {
+        messageWrapper.textContent = text;
+      }
+
+      if (type === 'bot') {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'flex justify-end gap-2 mt-2';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'bg-white bg-opacity-10 hover:bg-[#61dafb] hover:text-white text-white w-7 h-7 rounded-full flex items-center justify-center transition focus:outline-none';
+        copyBtn.title = 'Salin pesan';
+        copyBtn.setAttribute('aria-label', 'Salin pesan');
+        copyBtn.innerHTML = '<i class="far fa-copy"></i>';
+        copyBtn.addEventListener('click', () => copyTextToClipboard(text));
+
+        actionsDiv.appendChild(copyBtn);
+        messageWrapper.appendChild(actionsDiv);
+      }
+
+      chatbox.appendChild(messageWrapper);
+      messageWrapper.focus();
+      chatbox.scrollTo({ top: chatbox.scrollHeight, behavior: 'smooth' });
+    }
+
+    // Show typing indicator
+    function showTypingIndicator() {
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'flex items-center gap-2 px-4 py-2 bg-[#444] rounded-2xl self-start w-fit select-none';
+      typingDiv.setAttribute('aria-live', 'polite');
+      typingDiv.setAttribute('aria-label', 'AI sedang mengetik');
+
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'typing-dot';
+        typingDiv.appendChild(dot);
+      }
+
+      chatbox.appendChild(typingDiv);
+      chatbox.scrollTo({ top: chatbox.scrollHeight, behavior: 'smooth' });
+      return typingDiv;
+    }
+
+    // Send message handler
+    async function sendMessage() {
+      const userText = input.value.trim();
+      if (!userText) {
+        showNotification('Silakan masukkan pesan yang ingin di sampaikan terlebih dahulu');
+        return;
+      }
+
+      sendBtn.disabled = true;
+      input.value = '';
+      input.setAttribute('aria-busy', 'true');
+
+      addMessage(userText, 'user');
+      conversationHistory.push({ role: "user", content: userText });
+
+      const typingIndicator = showTypingIndicator();
+
+      try {
+        loadingSpinner.classList.remove('hidden');
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${API_KEY}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": window.location.href,
+            "X-Title": "AI Pribadi"
+          },
+          body: JSON.stringify({
+            model: "openai/gpt-3.5-turbo",
+            messages: conversationHistory
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const reply = data.choices?.[0]?.message?.content || "Maaf, saya tidak bisa memberikan jawaban saat ini.";
+
+        conversationHistory.push({ role: "assistant", content: reply });
+
+        typingIndicator.remove();
+
+        processBotReply(reply);
+      } catch (error) {
+        typingIndicator.remove();
+        addMessage(`Terjadi kesalahan: ${error.message}`, 'bot');
+        console.error('Error:', error);
+      } finally {
+        sendBtn.disabled = false;
+        input.removeAttribute('aria-busy');
+        loadingSpinner.classList.add('hidden');
+        input.focus();
+      }
+    }
+
+    // Process bot reply for code blocks
+    function processBotReply(reply) {
+      const codeBlocks = reply.match(/```[\s\S]*?```/g);
+
+      if (codeBlocks && codeBlocks.length > 0) {
+        let remainingText = reply;
+        const parts = [];
+
+        codeBlocks.forEach(block => {
+          const index = remainingText.indexOf(block);
+          if (index > 0) {
+            parts.push({
+              type: 'text',
+              content: remainingText.substring(0, index)
+            });
+          }
+
+          const codeContent = block.replace(/```/g, '');
+          parts.push({
+            type: 'code',
+            content: codeContent
+          });
+
+          remainingText = remainingText.substring(index + block.length);
+        });
+
+        if (remainingText.length > 0) {
+          parts.push({
+            type: 'text',
+            content: remainingText
+          });
+        }
+
+        parts.forEach(part => {
+          if (part.type === 'text' && part.content.trim().length > 0) {
+            addMessage(part.content.trim(), 'bot');
+          } else if (part.type === 'code') {
+            addMessage(part.content, 'bot', true);
+          }
+        });
+      } else {
+        addMessage(reply, 'bot');
+      }
+    }
+
+    // Speech recognition initialization
+    function initSpeechRecognition() {
+      if ('webkitSpeechRecognition' in window) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'id-ID';
+
+        micBtn.addEventListener('click', () => {
+          recognition.start();
+          micBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+          micBtn.classList.add('text-red-500');
+          micBtn.classList.remove('text-[#61dafb]');
+          micBtn.setAttribute('aria-pressed', 'true');
+        });
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          input.value = transcript;
+          micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+          micBtn.classList.remove('text-red-500');
+          micBtn.classList.add('text-[#61dafb]');
+          micBtn.setAttribute('aria-pressed', 'false');
+          input.focus();
+        };
+
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error', event.error);
+          micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+          micBtn.classList.remove('text-red-500');
+          micBtn.classList.add('text-[#61dafb]');
+          micBtn.setAttribute('aria-pressed', 'false');
+        };
+
+        recognition.onend = () => {
+          micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+          micBtn.classList.remove('text-red-500');
+          micBtn.classList.add('text-[#61dafb]');
+          micBtn.setAttribute('aria-pressed', 'false');
+        };
+      } else {
+        micBtn.style.display = 'none';
+      }
+    }
+
+    // Copy text to clipboard with notification
+    function copyTextToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showCopySuccess();
+      }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showCopySuccess();
+      });
+    }
+
+    function showCopySuccess() {
+      copySuccess.classList.remove('opacity-0', 'pointer-events-none');
+      copySuccess.classList.add('opacity-100');
+      setTimeout(() => {
+        copySuccess.classList.add('opacity-0', 'pointer-events-none');
+        copySuccess.classList.remove('opacity-100');
+      }, 2000);
+    }
+
+    // Clear chat and reset conversation
+    function clearChat() {
+      chatbox.innerHTML = '';
+      conversationHistory = [
+        {
+          role: "system",
+          content: "Kamu adalah AI pribadi yang ramah dan pintar, dibuat oleh @dimzzymodzz. Gunakan bahasa Indonesia yang baik dan santun."
+        }
+      ];
+      addMessage("Percakapan telah dihapus. Ada yang bisa saya bantu?", 'bot');
+      input.focus();
+    }
+
+    // Show notification for errors or info
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.textContent = message;
+      notification.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-md shadow-lg z-50 select-none animate-fadeInOut';
+      notification.setAttribute('role', 'alert');
+      notification.setAttribute('aria-live', 'assertive');
+      notification.setAttribute('aria-atomic', 'true');
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    // Event listeners
+    sendBtn.addEventListener('click', sendMessage);
+    clearBtn.addEventListener('click', clearChat);
+
+    window.addEventListener('load', () => {
+      initChat();
+      input.focus();
+    });
+  </script>
+ </body>
+</html>
